@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Box, Container, Typography, Button, Chip } from '@mui/material';
 import { ArrowForward, AutoAwesome } from '@mui/icons-material';
 import UnicornBackground from './UnicornBackground';
-
+import { modify_data } from '@/helper/csv_to_json';
 const HeroSection = () => {
   return (
     <Box
@@ -123,6 +123,7 @@ const HeroSection = () => {
               variant="contained"
               size="large"
               endIcon={<ArrowForward />}
+              onClick={modify_data}
               sx={{
                 background: 'linear-gradient(135deg, #603FEF 0%, #7D5FF3 100%)',
                 color: '#ffffff',
