@@ -2,22 +2,11 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
-import {
-  AppBar,
-  Box,
-  Container,
-  Toolbar,
-  IconButton,
-  Button,
-  Link,
-  Drawer,
-  List,
-  ListItem,
-  Divider,
-} from '@mui/material';
+
 import { Sparkles, Menu, X } from 'lucide-react';
 import { AutoAwesome, Menu as MenuIcon, Close } from '@mui/icons-material';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const navLinks = [
   { label: 'Features', href: '#features' },
@@ -28,7 +17,7 @@ const navLinks = [
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-
+  const router = useRouter();
   return (
     <motion.header
       initial={{ opacity: 0, y: -20 }}
@@ -67,6 +56,7 @@ const Navbar = () => {
               <button className="btn-primary-glow text-sm px-6 py-2">
                 Get Started
               </button>
+              </Link>
             </div>
 
             <button 
@@ -98,9 +88,11 @@ const Navbar = () => {
                   <button className="text-muted-foreground hover:text-foreground transition-colors py-2 text-left">
                     Sign In
                   </button>
+                  <Link href="/dashboard">
                   <button className="btn-primary-glow text-sm py-3">
                     Get Started
                   </button>
+                  </Link>
                 </div>
               </div>
             </motion.div>
