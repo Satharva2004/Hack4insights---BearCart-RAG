@@ -1,0 +1,475 @@
+import { ShoppingCart, TrendingUp, DollarSign, Target, Percent, Users, Calendar, Package } from 'lucide-react';
+import KpiCard from '../KpiCard';
+import ConversionChart from '../charts/ConversionChart';
+import { formatCurrency, formatPercentage, formatNumber } from '@/utils/dataCleaners';
+
+const ConversionSection = ({ sessions = [], orders = [], orderItems = [], products = [], pageviews = [] }) => {
+  // Calculate comprehensive conversion metrics
+  const calculateMetrics = () => {
+    // Basic counts
+    const totalSessions = sessions?.length || 0;
+    const totalOrders = orders?.length || 0;
+    const totalRevenue = orders.reduce((sum, order) => sum + parseFloat(order.price_usd || 0), 0);
+    const totalCogs = orders.reduce((sum, order) => sum + parseFloat(order.cogs_usd || 0), 0);
+    const totalProfit = totalRevenue - totalCogs;
+    
+    // Overall conversion rate
+    const overallConversionRate = totalSessions > 0 ? (totalOrders / totalSessions) * 100 : 0;
+    
+    // Average Order Value
+    const aov = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    
+    // Revenue per session
+    const revenuePerSession = totalSessions > 0 ? totalRevenue / totalSessions : 0;
+    
+    // Profit margin
+    const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+    
+    // Create order session lookup
+    const orderSessionIds = new Set(orders.map(o => o.website_session_id));
+    
+    // Conversion by Device
+    const deviceConversion = sessions.reduce((acc, session) => {
+      const device = session.device_type || 'unknown';
+      if (!acc[device]) {
+        acc[device] = { sessions: 0, conversions: 0, revenue: 0 };
+      }
+      acc[device].sessions += 1;
+      
+      if (orderSessionIds.has(session.website_session_id)) {
+        acc[device].conversions += 1;
+        const order = orders.find(o => o.website_session_id === session.website_session_id);
+        if (order) {
+          acc[device].revenue += parseFloat(order.price_usd || 0);
+        }
+      }
+      return acc;
+    }, {});
+    
+    const deviceData = Object.entries(deviceConversion).map(([device, data]) => ({
+      device,
+      sessions: data.sessions,
+      conversions: data.conversions,
+      conversionRate: data.sessions > 0 ? (data.conversions / data.sessions) * 100 : 0,
+      revenue: data.revenue
+    }));
+    
+    // Conversion by Source
+    const sourceConversion = sessions.reduce((acc, session) => {
+      const source = session.utm_source || 'direct';
+      if (!acc[source]) {
+        acc[source] = { sessions: 0, conversions: 0, revenue: 0 };
+      }
+      acc[source].sessions += 1;
+      
+      if (orderSessionIds.has(session.website_session_id)) {
+        acc[source].conversions += 1;
+        const order = orders.find(o => o.website_session_id === session.website_session_id);
+        if (order) {
+          acc[source].revenue += parseFloat(order.price_usd || 0);
+        }
+      }
+      return acc;
+    }, {});
+    
+    const sourceData = Object.entries(sourceConversion).map(([source, data]) => ({
+      source,
+      sessions: data.sessions,
+      conversions: data.conversions,
+      conversionRate: data.sessions > 0 ? (data.conversions / data.sessions) * 100 : 0,
+      revenue: data.revenue,
+      revenuePerSession: data.sessions > 0 ? data.revenue / data.sessions : 0
+    }));
+    
+    // Conversion by Campaign
+    const campaignConversion = sessions.reduce((acc, session) => {
+      const campaign = session.utm_campaign || 'none';
+      if (!acc[campaign]) {
+        acc[campaign] = { sessions: 0, conversions: 0, revenue: 0 };
+      }
+      acc[campaign].sessions += 1;
+      
+      if (orderSessionIds.has(session.website_session_id)) {
+        acc[campaign].conversions += 1;
+        const order = orders.find(o => o.website_session_id === session.website_session_id);
+        if (order) {
+          acc[campaign].revenue += parseFloat(order.price_usd || 0);
+        }
+      }
+      return acc;
+    }, {});
+    
+    const campaignData = Object.entries(campaignConversion).map(([campaign, data]) => ({
+      campaign,
+      sessions: data.sessions,
+      conversions: data.conversions,
+      conversionRate: data.sessions > 0 ? (data.conversions / data.sessions) * 100 : 0,
+      revenue: data.revenue
+    }));
+    
+    // New vs Returning visitor conversion
+    const newVisitors = sessions.filter(s => s.is_repeat_session === "0");
+    const returningVisitors = sessions.filter(s => s.is_repeat_session === "1");
+    
+    const newConversions = newVisitors.filter(s => orderSessionIds.has(s.website_session_id)).length;
+    const returningConversions = returningVisitors.filter(s => orderSessionIds.has(s.website_session_id)).length;
+    
+    const newConversionRate = newVisitors.length > 0 ? (newConversions / newVisitors.length) * 100 : 0;
+    const returningConversionRate = returningVisitors.length > 0 ? (returningConversions / returningVisitors.length) * 100 : 0;
+    
+    // Conversion over time
+    const conversionByDate = sessions.reduce((acc, session) => {
+      const date = session.created_at.split(' ')[0];
+      if (!acc[date]) {
+        acc[date] = { date, sessions: 0, conversions: 0 };
+      }
+      acc[date].sessions += 1;
+      
+      if (orderSessionIds.has(session.website_session_id)) {
+        acc[date].conversions += 1;
+      }
+      return acc;
+    }, {});
+    
+    const timelineData = Object.values(conversionByDate)
+      .map(item => ({
+        ...item,
+        conversionRate: item.sessions > 0 ? (item.conversions / item.sessions) * 100 : 0
+      }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    // Product performance
+    const productPerformance = orderItems.reduce((acc, item) => {
+      const productId = item.product_id;
+      if (!acc[productId]) {
+        acc[productId] = { orders: 0, revenue: 0, profit: 0 };
+      }
+      acc[productId].orders += 1;
+      acc[productId].revenue += parseFloat(item.price_usd || 0);
+      acc[productId].profit += parseFloat(item.price_usd || 0) - parseFloat(item.cogs_usd || 0);
+      return acc;
+    }, {});
+    
+    const productData = Object.entries(productPerformance).map(([productId, data]) => {
+      const product = products.find(p => p.product_id === productId);
+      return {
+        productName: product?.product_name || `Product ${productId}`,
+        orders: data.orders,
+        revenue: data.revenue,
+        profit: data.profit,
+        profitMargin: data.revenue > 0 ? (data.profit / data.revenue) * 100 : 0
+      };
+    });
+    
+    // Landing page conversion
+    const landingPages = pageviews.reduce((acc, pv) => {
+      if (!acc.sessions[pv.website_session_id]) {
+        acc.sessions[pv.website_session_id] = true;
+        const url = pv.pageview_url || '/';
+        if (!acc.pages[url]) {
+          acc.pages[url] = { sessions: 0, conversions: 0 };
+        }
+        acc.pages[url].sessions += 1;
+        
+        if (orderSessionIds.has(pv.website_session_id)) {
+          acc.pages[url].conversions += 1;
+        }
+      }
+      return acc;
+    }, { sessions: {}, pages: {} });
+    
+    const landingPageData = Object.entries(landingPages.pages)
+      .map(([url, data]) => ({
+        url,
+        sessions: data.sessions,
+        conversions: data.conversions,
+        conversionRate: data.sessions > 0 ? (data.conversions / data.sessions) * 100 : 0
+      }))
+      .sort((a, b) => b.conversionRate - a.conversionRate);
+    
+    // Conversion funnel
+    const uniqueSessionsWithPageviews = new Set(pageviews.map(pv => pv.website_session_id)).size;
+    const funnelData = [
+      { stage: 'Sessions', count: totalSessions, rate: 100 },
+      { stage: 'Engaged (>1 page)', count: uniqueSessionsWithPageviews, rate: totalSessions > 0 ? (uniqueSessionsWithPageviews / totalSessions) * 100 : 0 },
+      { stage: 'Orders', count: totalOrders, rate: totalSessions > 0 ? (totalOrders / totalSessions) * 100 : 0 }
+    ];
+    
+    return {
+      overallConversionRate,
+      totalOrders,
+      totalRevenue,
+      aov,
+      revenuePerSession,
+      profitMargin,
+      totalProfit,
+      deviceData,
+      sourceData,
+      campaignData,
+      newConversionRate,
+      returningConversionRate,
+      timelineData,
+      productData,
+      landingPageData,
+      funnelData,
+      newVisitors: newVisitors.length,
+      returningVisitors: returningVisitors.length
+    };
+  };
+  
+  const metrics = calculateMetrics();
+  
+  return (
+    <div className="space-y-8 animate-fade-in">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-3xl font-bold font-display text-foreground">Conversion Analysis</h1>
+        <p className="text-muted-foreground mt-1">Track conversion performance and optimize your funnel</p>
+      </div>
+
+      {/* Primary KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard
+          title="Conversion Rate"
+          value={formatPercentage(metrics.overallConversionRate)}
+          change={2.4}
+          changeLabel="vs last period"
+          trend="up"
+          icon={<Target className="w-4 h-4" />}
+        />
+        <KpiCard
+          title="Total Orders"
+          value={formatNumber(metrics.totalOrders)}
+          change={5.7}
+          changeLabel="vs last period"
+          trend="up"
+          icon={<ShoppingCart className="w-4 h-4" />}
+        />
+        <KpiCard
+          title="Revenue"
+          value={formatCurrency(metrics.totalRevenue)}
+          change={8.3}
+          changeLabel="vs last period"
+          trend="up"
+          icon={<DollarSign className="w-4 h-4" />}
+        />
+        <KpiCard
+          title="Avg Order Value"
+          value={formatCurrency(metrics.aov)}
+          change={1.2}
+          changeLabel="vs last period"
+          trend="neutral"
+          icon={<TrendingUp className="w-4 h-4" />}
+        />
+      </div>
+
+      {/* Secondary KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard
+          title="Revenue/Session"
+          value={formatCurrency(metrics.revenuePerSession)}
+          change={3.1}
+          changeLabel="vs last period"
+          trend="up"
+          icon={<Percent className="w-4 h-4" />}
+        />
+        <KpiCard
+          title="Profit Margin"
+          value={formatPercentage(metrics.profitMargin)}
+          change={0.8}
+          changeLabel="vs last period"
+          trend="up"
+          icon={<TrendingUp className="w-4 h-4" />}
+        />
+        <KpiCard
+          title="New Visitor Conv Rate"
+          value={formatPercentage(metrics.newConversionRate)}
+          change={-0.5}
+          changeLabel="vs last period"
+          trend="down"
+          icon={<Users className="w-4 h-4" />}
+        />
+        <KpiCard
+          title="Returning Conv Rate"
+          value={formatPercentage(metrics.returningConversionRate)}
+          change={4.2}
+          changeLabel="vs last period"
+          trend="up"
+          icon={<Calendar className="w-4 h-4" />}
+        />
+      </div>
+
+      {/* Charts Row 1 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ConversionChart 
+          type="timeline" 
+          data={metrics.timelineData} 
+          title="Conversion Rate Over Time"
+        />
+        <ConversionChart 
+          type="funnel" 
+          data={metrics.funnelData} 
+          title="Conversion Funnel"
+        />
+      </div>
+
+      {/* Charts Row 2 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ConversionChart 
+          type="source" 
+          data={metrics.sourceData.slice(0, 5)} 
+          title="Conversion Rate by Source"
+        />
+        <ConversionChart 
+          type="device" 
+          data={metrics.deviceData} 
+          title="Conversion Rate by Device"
+        />
+      </div>
+
+      {/* Charts Row 3 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ConversionChart 
+          type="product" 
+          data={metrics.productData} 
+          title="Revenue by Product"
+        />
+        <ConversionChart 
+          type="visitor-type" 
+          data={[
+            { type: 'New Visitors', sessions: metrics.newVisitors, conversionRate: metrics.newConversionRate },
+            { type: 'Returning', sessions: metrics.returningVisitors, conversionRate: metrics.returningConversionRate }
+          ]} 
+          title="New vs Returning Conversion"
+        />
+      </div>
+
+      {/* Tables */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Traffic Source Performance Table */}
+        <div className="glass-card p-6">
+          <h3 className="text-lg font-semibold font-display text-foreground mb-6">Source Performance</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Source</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Conv Rate</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Revenue</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Rev/Session</th>
+                </tr>
+              </thead>
+              <tbody>
+                {metrics.sourceData
+                  .sort((a, b) => b.conversionRate - a.conversionRate)
+                  .slice(0, 5)
+                  .map((item, index) => (
+                    <tr key={index} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
+                      <td className="py-3 px-4 text-sm text-foreground font-medium">{item.source}</td>
+                      <td className="py-3 px-4 text-sm text-foreground text-right">{formatPercentage(item.conversionRate)}</td>
+                      <td className="py-3 px-4 text-sm text-foreground text-right">{formatCurrency(item.revenue)}</td>
+                      <td className="py-3 px-4 text-sm text-muted-foreground text-right">{formatCurrency(item.revenuePerSession)}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Campaign Performance Table */}
+        <div className="glass-card p-6">
+          <h3 className="text-lg font-semibold font-display text-foreground mb-6">Campaign Performance</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Campaign</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Sessions</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Orders</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Conv Rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                {metrics.campaignData
+                  .sort((a, b) => b.conversionRate - a.conversionRate)
+                  .slice(0, 5)
+                  .map((item, index) => (
+                    <tr key={index} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
+                      <td className="py-3 px-4 text-sm text-foreground font-medium">{item.campaign}</td>
+                      <td className="py-3 px-4 text-sm text-foreground text-right">{formatNumber(item.sessions)}</td>
+                      <td className="py-3 px-4 text-sm text-foreground text-right">{formatNumber(item.conversions)}</td>
+                      <td className="py-3 px-4 text-sm text-muted-foreground text-right">{formatPercentage(item.conversionRate)}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Product & Landing Page Tables */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Product Performance Table */}
+        <div className="glass-card p-6">
+          <h3 className="text-lg font-semibold font-display text-foreground mb-6">Product Performance</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Product</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Orders</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Revenue</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Margin</th>
+                </tr>
+              </thead>
+              <tbody>
+                {metrics.productData
+                  .sort((a, b) => b.revenue - a.revenue)
+                  .map((item, index) => (
+                    <tr key={index} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
+                      <td className="py-3 px-4 text-sm text-foreground font-medium">{item.productName}</td>
+                      <td className="py-3 px-4 text-sm text-foreground text-right">{formatNumber(item.orders)}</td>
+                      <td className="py-3 px-4 text-sm text-foreground text-right">{formatCurrency(item.revenue)}</td>
+                      <td className="py-3 px-4 text-sm text-muted-foreground text-right">{formatPercentage(item.profitMargin)}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Top Converting Landing Pages */}
+        <div className="glass-card p-6">
+          <h3 className="text-lg font-semibold font-display text-foreground mb-6">Top Converting Landing Pages</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Page</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Sessions</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Orders</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Conv Rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                {metrics.landingPageData
+                  .filter(item => item.sessions >= 10) // Only show pages with significant traffic
+                  .slice(0, 5)
+                  .map((item, index) => (
+                    <tr key={index} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
+                      <td className="py-3 px-4 text-sm text-foreground font-mono text-xs">{item.url}</td>
+                      <td className="py-3 px-4 text-sm text-foreground text-right">{formatNumber(item.sessions)}</td>
+                      <td className="py-3 px-4 text-sm text-foreground text-right">{formatNumber(item.conversions)}</td>
+                      <td className="py-3 px-4 text-sm text-muted-foreground text-right">{formatPercentage(item.conversionRate)}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ConversionSection;
