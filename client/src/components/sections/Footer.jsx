@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
-import { Box, Container, Typography, Grid, Link, IconButton, Divider } from '@mui/material';
-import { AutoAwesome, GitHub, Twitter, LinkedIn } from '@mui/icons-material';
+import { Sparkles, Github, Twitter, Linkedin } from 'lucide-react';
 
 const footerLinks = {
   product: [
@@ -30,294 +29,100 @@ const footerLinks = {
 
 const Footer = () => {
   return (
-    <Box
-      component="footer"
-      sx={{
-        position: 'relative',
-        borderTop: '1px solid rgba(96, 63, 239, 0.2)',
-      }}
-    >
-      <Container maxWidth="lg" sx={{ px: { xs: 3, sm: 6 }, py: 8 }}>
-        <Grid container spacing={4} sx={{ mb: 6 }}>
-          {/* Brand Section */}
-          <Grid item xs={12} md={4}>
-            <Box
-              component={motion.div}
+    <footer className="relative border-t border-border/50">
+      <div className="container mx-auto px-6 py-16">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mb-12">
+          <div className="col-span-2">
+            <motion.div 
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              sx={{ mb: 2 }}
+              className="flex items-center gap-2 mb-4"
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 1.5,
-                    backgroundColor: 'rgba(96, 63, 239, 0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <AutoAwesome sx={{ fontSize: 20, color: '#603FEF' }} />
-                </Box>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontSize: '1.25rem',
-                    fontWeight: 700,
-                    color: '#ffffff',
-                  }}
-                >
-                  Nexus
-                </Typography>
-              </Box>
-            </Box>
-
-            <Typography
-              variant="body2"
-              sx={{
-                color: 'rgba(255, 255, 255, 0.7)',
-                fontSize: '0.875rem',
-                maxWidth: '320px',
-                mb: 3,
-                lineHeight: 1.6,
-              }}
-            >
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-xl font-bold">BearCart</span>
+            </motion.div>
+            <p className="text-muted-foreground text-sm max-w-xs mb-6">
               Transforming data into actionable intelligence for smarter business decisions.
-            </Typography>
+            </p>
+            <div className="flex items-center gap-4">
+              <a href="#" className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center hover:bg-primary/20 transition-colors">
+                <Twitter className="w-4 h-4 text-muted-foreground" />
+              </a>
+              <a href="#" className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center hover:bg-primary/20 transition-colors">
+                <Github className="w-4 h-4 text-muted-foreground" />
+              </a>
+              <a href="#" className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center hover:bg-primary/20 transition-colors">
+                <Linkedin className="w-4 h-4 text-muted-foreground" />
+              </a>
+            </div>
+          </div>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <IconButton
-                href="#"
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 1,
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    backgroundColor: 'rgba(96, 63, 239, 0.2)',
-                    color: '#ffffff',
-                  },
-                }}
-              >
-                <Twitter sx={{ fontSize: 16 }} />
-              </IconButton>
-
-              <IconButton
-                href="#"
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 1,
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    backgroundColor: 'rgba(96, 63, 239, 0.2)',
-                    color: '#ffffff',
-                  },
-                }}
-              >
-                <GitHub sx={{ fontSize: 16 }} />
-              </IconButton>
-
-              <IconButton
-                href="#"
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 1,
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    backgroundColor: 'rgba(96, 63, 239, 0.2)',
-                    color: '#ffffff',
-                  },
-                }}
-              >
-                <LinkedIn sx={{ fontSize: 16 }} />
-              </IconButton>
-            </Box>
-          </Grid>
-
-          {/* Product Links */}
-          <Grid item xs={6} sm={3} md={2}>
-            <Typography
-              variant="h6"
-              sx={{
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                mb: 2,
-                color: '#ffffff',
-              }}
-            >
-              Product
-            </Typography>
-            <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
+          <div>
+            <h4 className="font-semibold mb-4 text-foreground">Product</h4>
+            <ul className="space-y-3">
               {footerLinks.product.map((link) => (
-                <Box component="li" key={link.label} sx={{ mb: 1.5 }}>
-                  <Link
-                    href={link.href}
-                    underline="none"
-                    sx={{
-                      fontSize: '0.875rem',
-                      color: 'rgba(255, 255, 255, 0.7)',
-                      transition: 'color 0.3s ease',
-                      '&:hover': {
-                        color: '#ffffff',
-                      },
-                    }}
-                  >
+                <li key={link.label}>
+                  <a href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                     {link.label}
-                  </Link>
-                </Box>
+                  </a>
+                </li>
               ))}
-            </Box>
-          </Grid>
+            </ul>
+          </div>
 
-          {/* Company Links */}
-          <Grid item xs={6} sm={3} md={2}>
-            <Typography
-              variant="h6"
-              sx={{
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                mb: 2,
-                color: '#ffffff',
-              }}
-            >
-              Company
-            </Typography>
-            <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
+          <div>
+            <h4 className="font-semibold mb-4 text-foreground">Company</h4>
+            <ul className="space-y-3">
               {footerLinks.company.map((link) => (
-                <Box component="li" key={link.label} sx={{ mb: 1.5 }}>
-                  <Link
-                    href={link.href}
-                    underline="none"
-                    sx={{
-                      fontSize: '0.875rem',
-                      color: 'rgba(255, 255, 255, 0.7)',
-                      transition: 'color 0.3s ease',
-                      '&:hover': {
-                        color: '#ffffff',
-                      },
-                    }}
-                  >
+                <li key={link.label}>
+                  <a href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                     {link.label}
-                  </Link>
-                </Box>
+                  </a>
+                </li>
               ))}
-            </Box>
-          </Grid>
+            </ul>
+          </div>
 
-          {/* Resources Links */}
-          <Grid item xs={6} sm={3} md={2}>
-            <Typography
-              variant="h6"
-              sx={{
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                mb: 2,
-                color: '#ffffff',
-              }}
-            >
-              Resources
-            </Typography>
-            <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
+          <div>
+            <h4 className="font-semibold mb-4 text-foreground">Resources</h4>
+            <ul className="space-y-3">
               {footerLinks.resources.map((link) => (
-                <Box component="li" key={link.label} sx={{ mb: 1.5 }}>
-                  <Link
-                    href={link.href}
-                    underline="none"
-                    sx={{
-                      fontSize: '0.875rem',
-                      color: 'rgba(255, 255, 255, 0.7)',
-                      transition: 'color 0.3s ease',
-                      '&:hover': {
-                        color: '#ffffff',
-                      },
-                    }}
-                  >
+                <li key={link.label}>
+                  <a href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                     {link.label}
-                  </Link>
-                </Box>
+                  </a>
+                </li>
               ))}
-            </Box>
-          </Grid>
+            </ul>
+          </div>
 
-          {/* Legal Links */}
-          <Grid item xs={6} sm={3} md={2}>
-            <Typography
-              variant="h6"
-              sx={{
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                mb: 2,
-                color: '#ffffff',
-              }}
-            >
-              Legal
-            </Typography>
-            <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
+          <div>
+            <h4 className="font-semibold mb-4 text-foreground">Legal</h4>
+            <ul className="space-y-3">
               {footerLinks.legal.map((link) => (
-                <Box component="li" key={link.label} sx={{ mb: 1.5 }}>
-                  <Link
-                    href={link.href}
-                    underline="none"
-                    sx={{
-                      fontSize: '0.875rem',
-                      color: 'rgba(255, 255, 255, 0.7)',
-                      transition: 'color 0.3s ease',
-                      '&:hover': {
-                        color: '#ffffff',
-                      },
-                    }}
-                  >
+                <li key={link.label}>
+                  <a href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                     {link.label}
-                  </Link>
-                </Box>
+                  </a>
+                </li>
               ))}
-            </Box>
-          </Grid>
-        </Grid>
+            </ul>
+          </div>
+        </div>
 
-        <Divider sx={{ borderColor: 'rgba(96, 63, 239, 0.2)', mb: 4 }} />
-
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 2,
-          }}
-        >
-          <Typography
-            variant="body2"
-            sx={{
-              fontSize: '0.875rem',
-              color: 'rgba(255, 255, 255, 0.7)',
-            }}
-          >
-            © 2024 Nexus Analytics. All rights reserved.
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              fontSize: '0.875rem',
-              color: 'rgba(255, 255, 255, 0.7)',
-            }}
-          >
-            Built with precision for data-driven teams.
-          </Typography>
-        </Box>
-      </Container>
-    </Box>
+        <div className="border-t border-border/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-muted-foreground">
+            © 2025 BearCart Inc. All rights reserved.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Built with precision for smarter business decisions and data-driven teams.
+          </p>
+        </div>
+      </div>
+    </footer>
   );
 };
 

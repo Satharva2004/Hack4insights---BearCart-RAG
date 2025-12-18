@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { Sparkles, Menu, X } from 'lucide-react';
 import { AutoAwesome, Menu as MenuIcon, Close } from '@mui/icons-material';
+import Link from 'next/link';
 
 const navLinks = [
   { label: 'Features', href: '#features' },
@@ -58,9 +59,11 @@ const Navbar = () => {
             </div>
 
             <div className="hidden md:flex items-center gap-4">
+              
               <button className="text-sm text-muted-foreground hover:text-foreground transition-colors px-4 py-2">
                 Sign In
               </button>
+              <Link href="/dashboard">
               <button className="btn-primary-glow text-sm px-6 py-2">
                 Get Started
               </button>
