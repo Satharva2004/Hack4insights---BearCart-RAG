@@ -1,7 +1,17 @@
 import { Users, Monitor, Smartphone, TrendingUp, MousePointer, BarChart3, RefreshCw } from 'lucide-react';
 import KpiCard from '../KpiCard';
 import TrafficChart from '../charts/TrafficChart';
+import ChartInsight from '../ChatInsight';
+import AIRecommendations from '../AiRecommendation';
 import { formatNumber, formatPercentage } from '@/utils/dataCleaners';
+import { 
+  analyzeTimelineData, 
+  analyzeSourceData, 
+  analyzeDeviceData,
+  analyzeCampaignData,
+  analyzeLandingPages,
+  analyzeBounceRate
+} from '@/utils/insightEngine';
 
 const TrafficSection = ({ sessions, pageviews }) => {
   // Calculate metrics
@@ -50,7 +60,7 @@ const TrafficSection = ({ sessions, pageviews }) => {
       source: item.source,
       sessions: item.sessions,
       users: item.users.size
-    }));
+    })).sort((a, b) => b.sessions - a.sessions);
     
     // Traffic by campaign
     const trafficByCampaign = sessions.reduce((acc, session) => {
@@ -62,7 +72,7 @@ const TrafficSection = ({ sessions, pageviews }) => {
       return acc;
     }, {});
     
-    const campaignData = Object.values(trafficByCampaign);
+    const campaignData = Object.values(trafficByCampaign).sort((a, b) => b.sessions - a.sessions);
     
     // Traffic over time (by day)
     const trafficByDate = sessions.reduce((acc, session) => {
@@ -115,6 +125,17 @@ const TrafficSection = ({ sessions, pageviews }) => {
   
   const metrics = calculateMetrics();
   
+  // Generate insights for each chart
+  const timelineInsight = analyzeTimelineData(metrics.timelineData);
+  const sourceInsight = analyzeSourceData(metrics.sourceData);
+  const deviceInsight = analyzeDeviceData([
+    { device: 'desktop', sessions: metrics.deviceCounts.desktop || 0 },
+    { device: 'mobile', sessions: metrics.deviceCounts.mobile || 0 }
+  ]);
+  const campaignInsight = analyzeCampaignData(metrics.campaignData);
+  const bounceInsight = analyzeBounceRate(metrics.bounceRate, metrics.avgPagesPerSession);
+  const landingPageInsight = analyzeLandingPages(metrics.topLandingPages, metrics.totalSessions);
+  
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Page Header */}
@@ -159,6 +180,9 @@ const TrafficSection = ({ sessions, pageviews }) => {
         />
       </div>
 
+      {/* Bounce Rate Insight */}
+      <ChartInsight type={bounceInsight.type} message={bounceInsight.message} />
+
       {/* Secondary KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <KpiCard
@@ -189,32 +213,46 @@ const TrafficSection = ({ sessions, pageviews }) => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TrafficChart 
-          type="timeline" 
-          data={metrics.timelineData} 
-          title="Traffic Over Time"
-        />
-        <TrafficChart 
-          type="source" 
-          data={metrics.sourceData} 
-          title="Traffic by Source"
-        />
+        <div>
+          <TrafficChart 
+            type="timeline" 
+            data={metrics.timelineData} 
+            title="Traffic Over Time"
+          />
+          <ChartInsight type={timelineInsight.type} message={timelineInsight.message} />
+        </div>
+        
+        <div>
+          <TrafficChart 
+            type="source" 
+            data={metrics.sourceData} 
+            title="Traffic by Source"
+          />
+          <ChartInsight type={sourceInsight.type} message={sourceInsight.message} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TrafficChart 
-          type="device" 
-          data={[
-            { device: 'Desktop', sessions: metrics.deviceCounts.desktop || 0 },
-            { device: 'Mobile', sessions: metrics.deviceCounts.mobile || 0 }
-          ]} 
-          title="Device Breakdown"
-        />
-        <TrafficChart 
-          type="campaign" 
-          data={metrics.campaignData.slice(0, 5)} 
-          title="Top Campaigns"
-        />
+        <div>
+          <TrafficChart 
+            type="device" 
+            data={[
+              { device: 'Desktop', sessions: metrics.deviceCounts.desktop || 0 },
+              { device: 'Mobile', sessions: metrics.deviceCounts.mobile || 0 }
+            ]} 
+            title="Device Breakdown"
+          />
+          <ChartInsight type={deviceInsight.type} message={deviceInsight.message} />
+        </div>
+        
+        <div>
+          <TrafficChart 
+            type="campaign" 
+            data={metrics.campaignData.slice(0, 5)} 
+            title="Top Campaigns"
+          />
+          <ChartInsight type={campaignInsight.type} message={campaignInsight.message} />
+        </div>
       </div>
 
       {/* Tables */}
@@ -233,7 +271,6 @@ const TrafficSection = ({ sessions, pageviews }) => {
               </thead>
               <tbody>
                 {metrics.sourceData
-                  .sort((a, b) => b.sessions - a.sessions)
                   .slice(0, 5)
                   .map((item, index) => (
                     <tr key={index} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
@@ -274,8 +311,33 @@ const TrafficSection = ({ sessions, pageviews }) => {
               </tbody>
             </table>
           </div>
+          <ChartInsight type={landingPageInsight.type} message={landingPageInsight.message} />
         </div>
       </div>
+
+      {/* AI-Powered Recommendations */}
+      <AIRecommendations 
+        sectionType="traffic"
+        metrics={{
+          totalSessions: metrics.totalSessions,
+          uniqueUsers: metrics.uniqueUsers,
+          bounceRate: metrics.bounceRate.toFixed(1),
+          avgPagesPerSession: metrics.avgPagesPerSession.toFixed(2),
+          topSource: metrics.sourceData[0]?.source,
+          topSourcePercent: ((metrics.sourceData[0]?.sessions / metrics.totalSessions) * 100).toFixed(0),
+          mobilePercent: ((metrics.deviceCounts.mobile || 0) / metrics.totalSessions * 100).toFixed(0),
+          desktopPercent: ((metrics.deviceCounts.desktop || 0) / metrics.totalSessions * 100).toFixed(0),
+          returningRate: ((metrics.returningSessions / metrics.totalSessions) * 100).toFixed(1)
+        }}
+        insights={{
+          timeline: timelineInsight,
+          source: sourceInsight,
+          device: deviceInsight,
+          campaign: campaignInsight,
+          bounce: bounceInsight,
+          landingPage: landingPageInsight
+        }}
+      />
     </div>
   );
 };

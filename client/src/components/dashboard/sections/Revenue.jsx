@@ -3,9 +3,23 @@ import KpiCard from '../KpiCard';
 import RevenueChart from '../charts/RevenueChart';
 import OrdersChart from '../charts/OrdersChart';
 import ProductPieChart from '../charts/ProductPieChart';
+import ChartInsight from '../ChatInsight';
+import AIRecommendations from '../AiRecommendation';
 import { formatCurrency, formatNumber } from '@/utils/dataCleaners';
+import {
+  analyzeRevenueTrends,
+  analyzeOrderTrends,
+  analyzeRevenueByProduct,
+  analyzeProductDistribution
+} from '@/utils/insightEngine';
 
 const RevenueSection = ({ metrics, revenueByMonth, ordersByProduct }) => {
+  // Generate insights
+  const revenueTrendInsight = analyzeRevenueTrends(revenueByMonth);
+  const orderTrendInsight = analyzeOrderTrends(revenueByMonth);
+  const revenueByProductInsight = analyzeRevenueByProduct(ordersByProduct);
+  const orderDistributionInsight = analyzeProductDistribution(ordersByProduct, 'orders');
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Page Header */}
@@ -52,22 +66,52 @@ const RevenueSection = ({ metrics, revenueByMonth, ordersByProduct }) => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RevenueChart data={revenueByMonth} />
-        <OrdersChart data={revenueByMonth} />
+        <div>
+          <RevenueChart data={revenueByMonth} />
+          <ChartInsight type={revenueTrendInsight.type} message={revenueTrendInsight.message} />
+        </div>
+        <div>
+          <OrdersChart data={revenueByMonth} />
+          <ChartInsight type={orderTrendInsight.type} message={orderTrendInsight.message} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ProductPieChart 
-          data={ordersByProduct} 
-          title="Orders by Product" 
-          dataKey="orders"
-        />
-        <ProductPieChart 
-          data={ordersByProduct} 
-          title="Revenue by Product" 
-          dataKey="revenue"
-        />
+        <div>
+          <ProductPieChart 
+            data={ordersByProduct} 
+            title="Orders by Product" 
+            dataKey="orders"
+          />
+          <ChartInsight type={orderDistributionInsight.type} message={orderDistributionInsight.message} />
+        </div>
+        <div>
+          <ProductPieChart 
+            data={ordersByProduct} 
+            title="Revenue by Product" 
+            dataKey="revenue"
+          />
+          <ChartInsight type={revenueByProductInsight.type} message={revenueByProductInsight.message} />
+        </div>
       </div>
+
+      {/* AI-Powered Recommendations */}
+      <AIRecommendations 
+        sectionType="revenue"
+        metrics={{
+          totalRevenue: metrics.totalRevenue.toFixed(0),
+          netRevenue: metrics.netRevenue.toFixed(0),
+          totalOrders: metrics.totalOrders,
+          aov: metrics.aov.toFixed(2),
+          topProduct: ordersByProduct.sort((a, b) => (b.revenue || 0) - (a.revenue || 0))[0]?.product,
+          topProductRevenue: ordersByProduct.sort((a, b) => (b.revenue || 0) - (a.revenue || 0))[0]?.revenue?.toFixed(0)
+        }}
+        insights={{
+          revenueTrend: revenueTrendInsight,
+          orderTrend: orderTrendInsight,
+          revenueByProduct: revenueByProductInsight
+        }}
+      />
     </div>
   );
 };

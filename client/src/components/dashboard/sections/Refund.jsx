@@ -1,9 +1,20 @@
 import { RotateCcw, DollarSign, AlertTriangle, Package } from 'lucide-react';
 import KpiCard from '../KpiCard';
 import RefundChart from '../charts/RefundChart';
+import ChartInsight from '../ChatInsight';
+import AIRecommendations from '../AiRecommendation';
 import { formatCurrency, formatPercentage, formatNumber } from '@/utils/dataCleaners';
+import {
+  analyzeRefundTrends,
+  analyzeRefundByProduct
+} from '@/utils/insightEngine';
 
 const RefundSection = ({ metrics, refundsByProduct, totalRefundCount }) => {
+  // Generate insights
+  const avgRefundValue = totalRefundCount > 0 ? metrics.totalRefunds / totalRefundCount : 0;
+  const refundTrendInsight = analyzeRefundTrends(metrics.refundRate, avgRefundValue, totalRefundCount);
+  const refundByProductInsight = analyzeRefundByProduct(refundsByProduct);
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Page Header */}
@@ -40,7 +51,7 @@ const RefundSection = ({ metrics, refundsByProduct, totalRefundCount }) => {
         />
         <KpiCard
           title="Avg Refund Value"
-          value={formatCurrency(totalRefundCount > 0 ? metrics.totalRefunds / totalRefundCount : 0)}
+          value={formatCurrency(avgRefundValue)}
           change={0.8}
           changeLabel="vs last period"
           trend="neutral"
@@ -48,9 +59,15 @@ const RefundSection = ({ metrics, refundsByProduct, totalRefundCount }) => {
         />
       </div>
 
+      {/* Refund Rate Insight */}
+      <ChartInsight type={refundTrendInsight.type} message={refundTrendInsight.message} />
+
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RefundChart data={refundsByProduct} />
+        <div>
+          <RefundChart data={refundsByProduct} />
+          <ChartInsight type={refundByProductInsight.type} message={refundByProductInsight.message} />
+        </div>
         
         {/* Top Refunded Products Table */}
         <div className="glass-card p-6">
@@ -80,6 +97,23 @@ const RefundSection = ({ metrics, refundsByProduct, totalRefundCount }) => {
           </div>
         </div>
       </div>
+
+      {/* AI-Powered Recommendations */}
+      <AIRecommendations 
+        sectionType="refund"
+        metrics={{
+          totalRefunds: metrics.totalRefunds.toFixed(0),
+          refundRate: metrics.refundRate.toFixed(1),
+          refundCount: totalRefundCount,
+          avgRefundValue: avgRefundValue.toFixed(2),
+          topRefundedProduct: refundsByProduct.sort((a, b) => b.amount - a.amount)[0]?.product,
+          topRefundedAmount: refundsByProduct.sort((a, b) => b.amount - a.amount)[0]?.amount?.toFixed(0)
+        }}
+        insights={{
+          refundTrend: refundTrendInsight,
+          refundByProduct: refundByProductInsight
+        }}
+      />
     </div>
   );
 };
